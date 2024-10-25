@@ -29,7 +29,7 @@ class EvaluateAgent:
         
         new_state = state.copy()
         new_state["aligned"] = is_aligned
-        new_state["messages"] = state["messages"] + [{"role": "assistant", "content": response.content}]
+        # new_state["messages"] = state["messages"] + [{"role": "assistant", "content": response.content}]
         return new_state
         
 class AnalysisAgent:

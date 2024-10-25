@@ -11,11 +11,11 @@ os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]["API_KEY"]
 os.environ["LANGCHAIN_PROJECT"] = "Social Media Positioning Master"
 
 class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text="", silent=False):
+    def __init__(self, container, initial_text="", display_final=False):
         self.container = container
         self.text = initial_text
         self.placeholder = container.empty()
-        self.silent = silent
+        self.display_final = display_final
 
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         self.text += token
@@ -23,8 +23,8 @@ class StreamHandler(BaseCallbackHandler):
             self.placeholder.markdown(self.text + "▌")
 
     def on_llm_end(self, *args, **kwargs) -> None:
-        if not self.silent:
-            self.placeholder.markdown(self.text)
+        if not self.display_final:
+            self.placeholder.empty()
 
 def create_streaming_model(api_key: str, stream_handler: StreamHandler):
     """Create a streaming-enabled model"""
@@ -61,8 +61,6 @@ def display_analysis(content: str, is_aligned: bool):
     """Display the analysis with proper formatting."""
     title = "### Detailed Analysis" if is_aligned else "### Improvement Suggestions"
     st.markdown(title)
-
-    # Display content only once
     st.markdown(content)
 
 def main():
@@ -165,7 +163,10 @@ def main():
             return
         
         try:
-            with st.spinner("Analyzing your business positioning..."):
+            with st.spinner("Analyzing your Social Media positioning..."):
+                # Create a container for the final output
+                output_container = st.container()
+
                 # Create model with streaming handler
                 stream_handler = StreamHandler(st.empty())
                 model = create_streaming_model(groq_api_key, stream_handler)
