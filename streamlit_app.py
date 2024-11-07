@@ -11,20 +11,36 @@ os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]["API_KEY"]
 os.environ["LANGCHAIN_PROJECT"] = "Social Media Positioning Master"
 
 class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text="", display_final=False):
+    def __init__(self, container, initial_text=""):
         self.container = container
         self.text = initial_text
         self.placeholder = container.empty()
-        self.display_final = display_final
+        self.started_final_output = False
+        self.display_text = ""
 
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         self.text += token
-        if not self.silent:
-            self.placeholder.markdown(self.text + "▌")
+        
+        # Look for the start markers
+        if ("### Detailed Analysis" in self.text or "### Improvement Suggestions" in self.text) and not self.started_final_output:
+            self.started_final_output = True
+            # Extract everything after the marker
+            if "### Detailed Analysis" in self.text:
+                start_idx = self.text.find("### Detailed Analysis") + len("### Detailed Analysis\n")
+                self.display_text = self.text[start_idx:]
+            else:
+                start_idx = self.text.find("### Improvement Suggestions") + len("### Improvement Suggestions\n")
+                self.display_text = self.text[start_idx:]
+        elif self.started_final_output:
+            self.display_text += token
+
+        # Update display if we're in final output mode
+        if self.started_final_output:
+            self.placeholder.markdown(self.display_text + "▌")
 
     def on_llm_end(self, *args, **kwargs) -> None:
-        if not self.display_final:
-            self.placeholder.empty()
+        # Don't clear the placeholder - let the final display handle it
+        pass
 
 def create_streaming_model(api_key: str, stream_handler: StreamHandler):
     """Create a streaming-enabled model"""
@@ -59,7 +75,7 @@ def run_analysis(model, core_value, target_audience, persona, monetization):
 
 def display_analysis(content: str, is_aligned: bool):
     """Display the analysis with proper formatting."""
-    title = "### Detailed Analysis" if is_aligned else "### Improvement Suggestions"
+    title = "### All Elements are Coherent and Detailed Analysis" if is_aligned else "### Misalignment and Improvement Suggestions"
     st.markdown(title)
     st.markdown(content)
 
@@ -164,8 +180,8 @@ def main():
         
         try:
             with st.spinner("Analyzing your Social Media positioning..."):
-                # Create a container for the final output
-                output_container = st.container()
+                # Create a separate container for streaming output
+                streaming_container = st.empty()
 
                 # Create model with streaming handler
                 stream_handler = StreamHandler(st.empty())
@@ -179,6 +195,9 @@ def main():
                     persona,
                     monetization
                 )
+
+                # Clear streaming container
+                streaming_container.empty()
 
                 # Only display analysis content once
                 display_analysis(analysis_content, is_aligned)
