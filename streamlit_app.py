@@ -45,7 +45,7 @@ class StreamHandler(BaseCallbackHandler):
 def create_streaming_model(api_key: str, stream_handler: StreamHandler):
     """Create a streaming-enabled model"""
     return ChatGroq(
-        model="llama-3.1-70b-versatile",
+        model="llama-3.3-70b-versatile",
         temperature=0.8,
         api_key=api_key,
         streaming=True,
