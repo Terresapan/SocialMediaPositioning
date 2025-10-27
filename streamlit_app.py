@@ -2,12 +2,13 @@ import streamlit as st
 from langchain_groq import ChatGroq
 from utils import save_feedback
 from main import create_graph
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain_core.callbacks import BaseCallbackHandler
+
 import os
 
 # Environment setup
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]["API_KEY"]
+os.environ["LANGCHAIN_API_KEY"] = st.secrets["tracing"]["LANGCHAIN_API_KEY"]
 os.environ["LANGCHAIN_PROJECT"] = "Social Media Positioning Master"
 
 class StreamHandler(BaseCallbackHandler):
@@ -127,7 +128,7 @@ def main():
         else:
             st.sidebar.error("Please enter your feedback before submitting.")
 
-    st.sidebar.image("assets/logo01.jpg", use_container_width=True)
+    st.sidebar.image("assets/logo01.jpg", width='stretch')
 
     # API Key Input
     groq_api_key = st.text_input(
